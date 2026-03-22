@@ -1,75 +1,73 @@
 # 🔬 ARS — Autonomous Research Scientist
 
-An autonomous agent pipeline that ingests research papers, extracts assumptions, generates hypotheses, runs experiments with statistical rigor, and reasons epistemically about results — all without human intervention.
+> 🚧 **Work in Progress** — core pipeline runs end-to-end. Several modules are actively being developed.
 
-> 🚧 **Work in Progress** — core pipeline runs end-to-end. Several modules are actively being developed. Published to document architecture and direction.
+ARS is a pipeline that can read research papers, pull out key assumptions, suggest hypotheses, run experiments, and interpret results — mostly on its own. The goal is to see if a system can reason scientifically, not just perform computations.
 
 ---
 
 ## What It Does
 
-Most ML systems optimize a metric. ARS asks a harder question: **given a set of scientific assumptions, what hypotheses should be tested, and what do the results actually mean?**
+Most machine learning systems focus on optimizing a metric. ARS tries a bigger question: given a set of scientific assumptions, which hypotheses should we test, and what do the results actually mean?
 
-The system fetches papers from ArXiv, extracts assumptions from text, generates semantically linked hypotheses, runs simulation and real experiments, applies conservative epistemic verdicts, and visualizes the full reasoning graph — all autonomously.
+Currently, ARS can:
+
+- Fetch papers from ArXiv or use local PDFs
+- Extract assumptions from text
+- Generate hypotheses and link them semantically
+- Run experiments (simulated or real)
+- Make evidence-based conclusions
+- Visualize the reasoning process in a knowledge graph
 
 ---
 
-## 🏗 Architecture
-
+## Architecture
 ```
 ArXiv API / Local PDFs
          ↓
-   ingestion/parser.py
-   (PDF text extraction + assumption mining)
+   ingestion/parser.py         # Extracts text and assumptions
          ↓
-   hypothesis/engine.py
-   (SentenceTransformer semantic linking)
+   hypothesis/engine.py        # Links assumptions → hypotheses
          ↓
-   knowledge/graph.py
-   (NetworkX knowledge graph — assumptions → hypotheses)
+   knowledge/graph.py          # Tracks assumptions, hypotheses, results
          ↓
-   experiments/adapter.py
-   (Simulation mode / Real mode routing)
+   experiments/adapter.py      # Routes to simulation or real mode
          ↓
-   core/reasoning.py
-   (Epistemic verdict — direction-aware, CI-aware)
+   core/reasoning.py           # Evaluates results and gives verdicts
          ↓
-   reflection/reflect.py
-   (Record result back into knowledge graph)
+   reflection/reflect.py       # Stores results back in the graph
          ↓
    reports/generator.py + ui/dashboard.py
-   (Text report + PyVis interactive network)
+                                # Generates reports + interactive dashboard
 ```
 
 ---
 
-## 🚀 Features
+## Features
 
-- 📄 **ArXiv ingestion** — fetches and downloads papers via ArXiv API, falls back to local PDFs
-- 🧠 **Assumption extraction** — regex-based mining of assumption and hypothesis sentences from paper text
-- 🔗 **Semantic hypothesis generation** — MiniLM embeddings link assumptions to hypotheses via cosine similarity
-- 🧪 **Dual experiment modes** — simulation (bootstrap CI, controlled noise) and real (guarded execution)
-- 📊 **Bootstrap confidence intervals** — proper statistical uncertainty quantification, not just point estimates
-- ⚖️ **Epistemic verdict engine** — 5-tier conservative judgment: Negative / No Effect / Weak / Moderate / Strong Signal
-- 🗂 **Knowledge graph** — directed NetworkX graph tracking assumption → hypothesis → result lineage
-- 🌐 **Interactive dashboard** — PyVis network visualization of the full reasoning graph in Streamlit
-- 💾 **JSON run persistence** — every run saved with full lineage for reproducibility
+- 📄 **ArXiv ingestion** — fetch papers automatically, fallback to local PDFs
+- 🔍 **Assumption extraction** — pulls out key sentences from papers
+- 🔗 **Hypothesis generation** — links assumptions to hypotheses using semantic embeddings
+- 🧪 **Experiment modes** — simulation with statistical rigor or real (guarded) execution
+- 📊 **Bootstrap confidence intervals** — quantifies uncertainty in results
+- ⚖️ **Epistemic verdict engine** — categorizes results as Negative, No Effect, Weak, Moderate, or Strong Signal
+- 🗂 **Knowledge graph** — directed graph tracking assumptions → hypotheses → results
+- 🌐 **Interactive dashboard** — visualize the reasoning process using Streamlit + PyVis
+- 💾 **JSON persistence** — saves each run for reproducibility
 
 ---
 
-## 🧪 Epistemic Verdict System
-
-Rather than binary pass/fail, ARS applies direction-aware, CI-aware verdicts:
+## Epistemic Verdicts
 
 | Verdict | Condition |
 |---|---|
-| `NEGATIVE RESULT` | Effect contradicts hypothesis direction |
+| `NEGATIVE RESULT` | Effect contradicts hypothesis |
 | `NO MEANINGFUL EFFECT` | Relative effect < 5% |
-| `WEAK SIGNAL — INCONCLUSIVE` | Relative effect 5–15% |
-| `MODERATE SIGNAL — REQUIRES REPLICATION` | Relative effect 15–30% |
-| `STRONG SIGNAL — CONDITIONAL SUPPORT` | Relative effect > 30% |
+| `WEAK SIGNAL` | Relative effect 5–15% |
+| `MODERATE SIGNAL` | Relative effect 15–30% |
+| `STRONG SIGNAL` | Relative effect > 30% |
 
-CI overlap with zero automatically downgrades any verdict to Weak Signal or Negative.
+If the confidence interval overlaps zero, the verdict is automatically downgraded to Weak or Negative.
 
 ---
 
@@ -79,7 +77,7 @@ CI overlap with zero automatically downgrades any verdict to Weak Signal or Nega
 |---|---|
 | **Ingestion** | feedparser, PyPDF2, requests |
 | **Embeddings** | Sentence-Transformers (MiniLM) |
-| **Statistics** | NumPy, Bootstrap CI |
+| **Statistics** | NumPy, bootstrap CI |
 | **Knowledge Graph** | NetworkX |
 | **UI** | Streamlit, PyVis |
 | **Persistence** | JSON |
@@ -88,75 +86,52 @@ CI overlap with zero automatically downgrades any verdict to Weak Signal or Nega
 ---
 
 ## 📂 Project Structure
-
 ```
 ars/
-├── main.py                  # Entry point — full pipeline
+├── main.py
 ├── core/
-│   ├── schemas.py           # ARSRun, HypothesisResult, InterventionSpec dataclasses
-│   └── reasoning.py         # Epistemic verdict engine
+│   ├── schemas.py
+│   └── reasoning.py
 ├── experiments/
-│   ├── adapter.py           # Mode routing — simulation vs real
-│   ├── config.py            # ExperimentMode enum
-│   ├── runner.py            # Simulation runner with bootstrap CI
-│   ├── real_runner.py       # Real experiment runner (guarded)
-│   └── evaluate.py          # Result evaluation + matplotlib plot
+│   ├── adapter.py
+│   ├── config.py
+│   ├── runner.py
+│   ├── real_runner.py
+│   └── evaluate.py
 ├── hypothesis/
-│   ├── engine.py            # Semantic hypothesis generation
-│   └── failure_engine.py    # Alternative generation for negative results
+│   ├── engine.py
+│   └── failure_engine.py
 ├── ingestion/
-│   ├── arxiv_utils.py       # ArXiv API fetch + local PDF fallback
-│   └── parser.py            # PDF text extraction + assumption mining
+│   ├── arxiv_utils.py
+│   └── parser.py
 ├── knowledge/
-│   └── graph.py             # NetworkX knowledge graph
+│   └── graph.py
 ├── reflection/
-│   └── reflect.py           # Records results back into knowledge graph
+│   └── reflect.py
 ├── reports/
-│   └── generator.py         # Text report generation
+│   └── generator.py
 ├── ui/
-│   └── dashboard.py         # Streamlit + PyVis interactive dashboard
-├── runs/                    # Auto-generated JSON run outputs (gitignored)
-└── papers/                  # Downloaded ArXiv PDFs (gitignored)
+│   └── dashboard.py
+├── runs/          # JSON outputs (gitignored)
+└── papers/        # Downloaded PDFs (gitignored)
 ```
 
 ---
 
 ## ⚙️ Installation & Running
-
-1. **Clone the repository**
-
 ```bash
-git clone https://github.com/SWARNIM-TIWARI/ars.git
-cd ars
-```
-
-2. **Create and activate a virtual environment**
-
-```bash
+git clone https://github.com/SWARNIM-TIWARI/autonomous-research-scientist.git
+cd autonomous-research-scientist
 python -m venv venv
 
-# Windows (PowerShell)
+# Windows
 .\venv\Scripts\Activate.ps1
 
 # macOS/Linux
 source venv/bin/activate
-```
 
-3. **Install dependencies**
-
-```bash
 pip install -r requirements.txt
-```
-
-4. **Run the pipeline**
-
-```bash
 python main.py
-```
-
-5. **Launch the dashboard**
-
-```bash
 streamlit run ui/dashboard.py
 ```
 
@@ -164,30 +139,26 @@ streamlit run ui/dashboard.py
 
 ## ⚠️ Current Limitations
 
-These are documented intentionally:
-
-- Hypothesis text is currently placeholder — semantic generation from actual paper content is in progress
-- `real_runner.py` simulates a real experiment with controlled noise — true model execution not yet wired
-- `failure_engine.py` is a stub — alternative hypothesis generation is planned
-- ArXiv ingestion requires network access — local PDF fallback available
-- No persistent knowledge graph across runs yet — graph is rebuilt each session
+- Hypothesis text is still a placeholder — semantic generation from paper content is in progress
+- `real_runner.py` simulates real experiments — actual execution is not yet implemented
+- `failure_engine.py` is a stub for alternative hypothesis generation
+- Knowledge graph is not persistent across runs — it is rebuilt each session
 
 ---
 
 ## 🔭 Planned Development
 
-- True hypothesis generation from extracted assumption text using LLM
-- Real model experiment execution with actual training loops
-- Persistent knowledge graph with cross-run memory
-- Automated literature review loop — new papers trigger new hypotheses
-- LLM-powered reflection and alternative generation
-- Multi-agent architecture — separate agents for ingestion, reasoning, and reflection
+- True hypothesis generation from extracted assumptions using LLMs
+- Real experiment execution with model training
+- Persistent knowledge graph across runs
+- Automated literature review to trigger new hypotheses
+- Multi-agent architecture for ingestion, reasoning, and reflection
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+MIT License
 
 ---
 
